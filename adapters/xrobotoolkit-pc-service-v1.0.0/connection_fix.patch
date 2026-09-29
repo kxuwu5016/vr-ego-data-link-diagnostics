@@ -1,0 +1,62 @@
+diff --git a/RoboticsService/DeviceConnectionManager/Manage/TCPConnectionManage/tcpserverworker.cpp b/RoboticsService/DeviceConnectionManager/Manage/TCPConnectionManage/tcpserverworker.cpp
+index 6982f67..4770a6c 100644
+--- a/RoboticsService/DeviceConnectionManager/Manage/TCPConnectionManage/tcpserverworker.cpp
++++ b/RoboticsService/DeviceConnectionManager/Manage/TCPConnectionManage/tcpserverworker.cpp
+@@ -186,6 +186,7 @@ void DevConnSDK::TcpServerWorker::onNewTcpDeviceConfirmed(const QString& sn, con
+         {
+             qDebug() << "new tcp connect device ddd to map: " << sn << Qt::endl;
+             m_connectDevice[model.m_uid].setConnection(m_tempTcpMap[tempIndex].m_tcpPtr);
++            m_connectDevice[model.m_uid].m_currentHeartBeatTime = QDateTime::currentSecsSinceEpoch();
+             m_tempTcpMap[tempIndex].setDisconnection();
+         }
+ 
+@@ -211,7 +212,19 @@ void DevConnSDK::TcpServerWorker::onNewTcpDeviceConfirmed(const QString& sn, con
+         {
+             m_connectDevice[sn].setDisconnection();
+             m_connectDevice[sn].setConnection(m_tempTcpMap[tempIndex].m_tcpPtr);
++            m_connectDevice[sn].m_currentHeartBeatTime = QDateTime::currentSecsSinceEpoch();
+             m_tempTcpMap[tempIndex].setDisconnection();
++
++            // This UID can remain in the map after a timeout.  A new TCP
++            // connection must announce it again so SDK subscribers see it.
++            if(m_managerHandler->m_connectEventHandler != NULL)
++            {
++                m_managerHandler->m_connectEventHandler->onUserJoined(sn.toLocal8Bit().data(), 0);
++            }
++            else if(m_managerHandler->m_connectEventHandlerInQt != NULL)
++            {
++                emit m_managerHandler->m_connectEventHandlerInQt->userJoinedSignal(sn);
++            }
+         }
+     }
+ }
+diff --git a/RoboticsService/DeviceConnectionManager/Model/tcpconnectionmodel.cpp b/RoboticsService/DeviceConnectionManager/Model/tcpconnectionmodel.cpp
+index 834109a..e7d1fd7 100644
+--- a/RoboticsService/DeviceConnectionManager/Model/tcpconnectionmodel.cpp
++++ b/RoboticsService/DeviceConnectionManager/Model/tcpconnectionmodel.cpp
+@@ -356,6 +356,13 @@ void DevConnSDK::TCPConnectionModel::onClientMsg(const TcpMessage& msg)
+ 
+ int DevConnSDK::TCPConnectionModel::dealClientPack(const TcpMessage& msg)
+ {
++    // The headset can keep sending tracking JSON even when its dedicated
++    // heartbeat pauses. A valid packet proves that this TCP device is alive;
++    // otherwise the 20-second check can mark a streaming device offline.
++    if(!m_uid.isEmpty())
++    {
++        m_currentHeartBeatTime = QDateTime::currentSecsSinceEpoch();
++    }
+     QString msgStr = QString(msg.m_msg);
+     switch (msg.m_head.cmd)
+     {
+diff --git a/RoboticsService/DeviceConnectionManager/utils/utils.cpp b/RoboticsService/DeviceConnectionManager/utils/utils.cpp
+index 0dfb843..bbfb61a 100644
+--- a/RoboticsService/DeviceConnectionManager/utils/utils.cpp
++++ b/RoboticsService/DeviceConnectionManager/utils/utils.cpp
+@@ -2,6 +2,7 @@
+ #include <QHostInfo>
+ #include <QStringList>
+ #include <QNetworkInterface>
++#include <QDebug>
+ #include "utils.h"
+ 
+ DevConnSDK::Utils::Utils()

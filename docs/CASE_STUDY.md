@@ -2,6 +2,12 @@
 
 测试环境：XRoboToolkit Unity Client v1.1.1、PC Service v1.0.0、Linux 电脑与 Python SDK。本文只讨论手柄数据到达电脑程序的链路；不把机器人控制错误归入同一故障。
 
+## 跨电脑复现与排查范围
+
+用户此前在另一台电脑上遇到过同类手柄数据读不到的问题，因此将个人工程整体迁移到当前电脑；迁移后先能正常读取，随后又出现同类症状。两台电脑都使用 PICO VR、XRoboToolkit PC Service/SDK 这一数据链路。**更换电脑并迁移项目后仍复现**，说明不能仅凭症状把故障归咎于某一台电脑的硬件；同时，由于服务、终端环境等也随迁移或后续使用发生变化，这不是只改变“电脑”一项的严格控制变量实验，也不能单靠换电脑定位根因。
+
+现有记录没有证明更换过 PICO 头显，因此不把“换过 VR 眼镜”列为已完成的排除实验。最终定位依据下面的服务日志、源码检查和同一终端代理环境下的前后对照，而非设备更换本身。
+
 ## 两个断点
 
 1. **电脑服务层**：PC Service 原实现仅在收到专用心跳包时刷新在线计时。连续的 Tracking 数据存在时仍可能超过 20 秒被判离线；同一设备标识重连后也没有重新通知 SDK。完整修复是 [`connection_fix.patch`](../adapters/xrobotoolkit-pc-service-v1.0.0/connection_fix.patch)，构建入口是 [`build.sh`](../adapters/xrobotoolkit-pc-service-v1.0.0/build.sh)。

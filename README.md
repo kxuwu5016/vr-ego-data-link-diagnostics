@@ -4,6 +4,8 @@
 
 本项目来自一次 PICO VR + XRoboToolkit 的实际排障，但诊断方法可用于其他采用“设备 → 电脑服务 → 本机 SDK”链路的遥操作系统。**通用的是分层诊断方法；PC Service 补丁仅针对 XRoboToolkit v1.0.0。** [案例与验证记录](docs/CASE_STUDY.md)。
 
+要在新的 Codex 对话中接手本项目，请先看[继续工作说明](docs/CONTINUE.md)：它列出已验证结论、尚无证据的推断、代码入口和可复制的新对话开场文字。
+
 ## 故障地图
 
 ```text

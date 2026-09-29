@@ -24,10 +24,10 @@ XR 设备 ──网络/TCP──> 电脑服务 ──本机 gRPC/SDK──> 应�
 需要 Python 3.10+；诊断命令只读取本机环境、日志或检查 TCP 可达性，不向机器人发送控制。
 
 ```bash
-./teleop-link env
-./teleop-link tcp --host 127.0.0.1 --port 60061
-./teleop-link jsonl /path/to/read-samples.jsonl
-./teleop-link log /path/to/sdk.log --marker 'server connect' --marker 'device found'
+bash ./teleop-link env
+bash ./teleop-link tcp --host 127.0.0.1 --port 60061
+bash ./teleop-link jsonl /path/to/read-samples.jsonl
+bash ./teleop-link log /path/to/sdk.log --marker 'server connect' --marker 'device found'
 ```
 
 `env` 只输出代理**变量名**和风险判断，不输出代理 URL 或凭据。它依据 [gRPC C-Core 的代理选择规则](https://github.com/grpc/grpc/blob/master/doc/core/default_http_proxy_mapper.md)检查小写变量；风险提示并不等同于 SDK 连接失败的证明。`tcp` 只证明 TCP 端口可达，不证明 gRPC 正常或设备在线。`jsonl` 默认识别 `tracking_timestamp_ns` / `timestamp_ns` 与 `right_controller_pose` / `pose7`；其他方案可用 `--timestamp-key`、`--pose-key` 指定字段。`log` 用用户指定的字面标记计数，适配不同服务的日志。
@@ -35,7 +35,7 @@ XR 设备 ──网络/TCP──> 电脑服务 ──本机 gRPC/SDK──> 应�
 如果某个 **只需要连接本机服务** 的 SDK 命令确实受到代理影响，可以明确由用户执行：
 
 ```bash
-./teleop-link run-local-sdk -- python3 /path/to/your-read-only-sdk-check.py
+bash ./teleop-link run-local-sdk -- python3 /path/to/your-read-only-sdk-check.py
 ```
 
 这个命令只为其子进程清除 HTTP/HTTPS/ALL/GRPC 代理变量，并设置 `no_proxy=127.0.0.1,localhost`；不修改父终端、VPN 或系统代理。它会执行用户提供的任意命令，因此应先使用只读 SDK 检查程序。完整实现位于 [`src/teleop_link_diag/cli.py`](src/teleop_link_diag/cli.py)。

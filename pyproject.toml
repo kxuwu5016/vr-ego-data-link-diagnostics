@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vr-ego-data-link-diagnostics"
+version = "0.1.0"
+description = "Read-only diagnostics for VR embodied Ego Data collection links"
+requires-python = ">=3.10"
+readme = "README.md"
+authors = [{name = "5016fr3 project contributors"}]
+classifiers = ["Programming Language :: Python :: 3"]
+
+[project.scripts]
+teleop-link = "teleop_link_diag.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
